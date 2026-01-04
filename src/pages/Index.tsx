@@ -14,40 +14,46 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
 import { TrustScoreRing } from "@/components/TrustScoreRing";
 import { FloatingCard } from "@/components/FloatingCard";
-
-const features = [
-  {
-    icon: Shield,
-    title: "Verified Trust Scores",
-    description: "Every worker's trust score is built through real, verified work history and employer vouches.",
-  },
-  {
-    icon: Users,
-    title: "Direct Connections",
-    description: "Connect directly with trusted workers in your area. No intermediaries, no hidden fees.",
-  },
-  {
-    icon: Star,
-    title: "Transparent Vouching",
-    description: "Employers vouch for workers they've hired, creating a transparent web of trust.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Growing Reputation",
-    description: "Workers build their reputation over time, creating long-term career opportunities.",
-  },
-];
-
-const stats = [
-  { value: "5,000+", label: "Verified Workers" },
-  { value: "10,000+", label: "Jobs Completed" },
-  { value: "98%", label: "Satisfaction Rate" },
-  { value: "50+", label: "Cities Covered" },
-];
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Index = () => {
+  const { tSync } = useLanguage();
+
+  const features = [
+    {
+      icon: Shield,
+      title: tSync('Verified Trust Scores'),
+      description: "Every worker's trust score is built through real, verified work history and employer vouches.",
+    },
+    {
+      icon: Users,
+      title: tSync('Direct Connections'),
+      description: "Connect directly with trusted workers in your area. No intermediaries, no hidden fees.",
+    },
+    {
+      icon: Star,
+      title: tSync('Transparent Vouching'),
+      description: "Employers vouch for workers they've hired, creating a transparent web of trust.",
+    },
+    {
+      icon: TrendingUp,
+      title: tSync('Growing Reputation'),
+      description: "Workers build their reputation over time, creating long-term career opportunities.",
+    },
+  ];
+
+  const stats = [
+    { value: "5,000+", label: tSync('Verified Workers') },
+    { value: "10,000+", label: tSync('Jobs Completed Stats') },
+    { value: "98%", label: tSync('Satisfaction Rate') },
+    { value: "50+", label: tSync('Cities Covered') },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
+      <LanguageToggle />
+      
       {/* Navigation */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border-soft">
         <div className="container mx-auto px-6 py-4">
@@ -55,21 +61,21 @@ const Index = () => {
             <Logo size="md" />
             <nav className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
-                Features
+                {tSync('Features')}
               </a>
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
-                How It Works
+                {tSync('How It Works')}
               </a>
               <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
-                Testimonials
+                {tSync('Testimonials')}
               </a>
             </nav>
             <div className="flex items-center gap-3">
               <Link to="/login">
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost">{tSync('Sign In')}</Button>
               </Link>
               <Link to="/register">
-                <Button variant="default">Get Started</Button>
+                <Button variant="default">{tSync('Get Started')}</Button>
               </Link>
             </div>
           </div>
@@ -92,14 +98,13 @@ const Index = () => {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-soft text-primary text-sm font-medium mb-6">
                 <Shield size={16} />
-                Trust-Driven Employment
+                {tSync('Trust-Driven Employment')}
               </div>
               
               <h1 className="text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6">
-                Hire with
-                <span className="text-primary"> Confidence</span>,
+                {tSync('Hire with Confidence')},
                 <br />
-                Work with <span className="text-primary">Trust</span>
+                {tSync('Work with Trust')}
               </h1>
               
               <p className="text-xl text-muted-foreground mb-8 max-w-lg">
@@ -109,13 +114,13 @@ const Index = () => {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link to="/register">
                   <Button variant="glow" size="xl" className="w-full sm:w-auto">
-                    Start Building Trust
+                    {tSync('Start Building Trust')}
                     <ArrowRight size={20} />
                   </Button>
                 </Link>
                 <Link to="/search">
                   <Button variant="outline" size="xl" className="w-full sm:w-auto">
-                    Find Workers
+                    {tSync('Find Workers')}
                   </Button>
                 </Link>
               </div>
@@ -163,7 +168,7 @@ const Index = () => {
                   </div>
 
                   <div className="flex gap-2 flex-wrap mb-4">
-                    {["Verified", "Top Rated", "Fast Responder"].map((badge) => (
+                    {[tSync('Verified'), "Top Rated", tSync('Fast Responder')].map((badge) => (
                       <span
                         key={badge}
                         className="px-3 py-1 rounded-full bg-success-soft text-success text-xs font-medium flex items-center gap-1"
@@ -176,7 +181,7 @@ const Index = () => {
 
                   <Button variant="default" className="w-full">
                     <Briefcase size={16} />
-                    Send Job Request
+                    {tSync('Send Job Request')}
                   </Button>
                 </div>
 
@@ -184,14 +189,14 @@ const Index = () => {
                 <FloatingCard
                   icon={Users}
                   value="48"
-                  label="Vouches Received"
+                  label={tSync('Vouches')}
                   delay={0.5}
                   className="absolute -left-8 top-8"
                 />
                 <FloatingCard
                   icon={Award}
                   value="156"
-                  label="Jobs Completed"
+                  label={tSync('Jobs Completed')}
                   delay={0.7}
                   className="absolute -right-8 bottom-8"
                 />
@@ -211,7 +216,7 @@ const Index = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-foreground mb-4">
-              Why Choose <span className="text-primary">VouchSafe</span>?
+              {tSync('Why Choose VouchSafe?')}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               We're building the most trusted employment network where reputation matters.
@@ -253,7 +258,7 @@ const Index = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-foreground mb-4">
-              How It <span className="text-primary">Works</span>
+              {tSync('How It Works')}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Simple steps to start hiring trusted workers or building your reputation.
@@ -264,17 +269,17 @@ const Index = () => {
             {[
               {
                 step: "01",
-                title: "Create Account",
+                title: tSync('Create Account Steps'),
                 description: "Sign up as an employer or employee. Verify your identity to start building trust.",
               },
               {
                 step: "02",
-                title: "Connect & Work",
+                title: tSync('Connect & Work'),
                 description: "Find trusted workers or accept job requests. Complete work professionally.",
               },
               {
                 step: "03",
-                title: "Vouch & Grow",
+                title: tSync('Vouch & Grow'),
                 description: "Employers vouch for great workers. Build your trust score with every successful job.",
               },
             ].map((item, index) => (
@@ -314,7 +319,7 @@ const Index = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-bold text-foreground mb-4">
-              Ready to Build <span className="text-primary">Trust</span>?
+              {tSync('Ready to Build Trust?')}
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-lg mx-auto">
               Join thousands of verified workers and employers in the most trusted employment network.
@@ -322,13 +327,13 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/register">
                 <Button variant="glow" size="xl">
-                  Get Started Free
+                  {tSync('Get Started Free')}
                   <ArrowRight size={20} />
                 </Button>
               </Link>
               <Link to="/search">
                 <Button variant="outline" size="xl">
-                  Browse Workers
+                  {tSync('Browse Workers')}
                 </Button>
               </Link>
             </div>
@@ -342,17 +347,17 @@ const Index = () => {
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <Logo size="md" />
             <p className="text-muted-foreground text-sm">
-              © 2024 VouchSafe. All rights reserved. Built with trust.
+              © 2024 VouchSafe. {tSync('All rights reserved')}
             </p>
             <div className="flex items-center gap-6">
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                Privacy
+                {tSync('Privacy')}
               </a>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                Terms
+                {tSync('Terms')}
               </a>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                Contact
+                {tSync('Contact')}
               </a>
             </div>
           </div>

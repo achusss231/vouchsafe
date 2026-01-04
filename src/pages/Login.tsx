@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, Users, Briefcase, CheckCircle } from "lucide-react";
@@ -6,7 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/Logo";
 import { FloatingCard } from "@/components/FloatingCard";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const testimonials = [
   {
@@ -34,32 +37,50 @@ const Login = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tSync } = useLanguage();
+  const { login, user } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   // Auto-rotate testimonials
-  useState(() => {
+  useEffect(() => {
     const interval = setInterval(() => {
       setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(interval);
-  });
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await login(email, password);
       toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in.",
+        title: tSync('Welcome back!'),
+        description: tSync('You have successfully logged in.'),
       });
       navigate("/dashboard");
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: tSync('Login failed'),
+        description: error.response?.data?.message || 'Invalid credentials',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex">
+      <LanguageToggle />
+      
       {/* Left Side - Form */}
       <motion.div
         className="w-full lg:w-[55%] flex flex-col justify-center px-8 lg:px-16 xl:px-24 bg-background"
@@ -76,11 +97,11 @@ const Login = () => {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-4xl font-bold text-foreground mb-2">
-              Welcome Back to
-              <span className="block text-primary">Trusted Work</span>
+              {tSync('Welcome Back to Trusted Work').split(' ').slice(0, 3).join(' ')}
+              <span className="block text-primary">{tSync('Welcome Back to Trusted Work').split(' ').slice(3).join(' ') || 'Trusted Work'}</span>
             </h1>
             <p className="text-muted-foreground text-lg mb-8">
-              Verified people. Verified opportunities.
+              {tSync('Verified people. Verified opportunities.')}
             </p>
           </motion.div>
 
@@ -92,7 +113,7 @@ const Login = () => {
             transition={{ delay: 0.3 }}
           >
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Email</label>
+              <label className="text-sm font-medium text-foreground">{tSync('Email')}</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
@@ -107,7 +128,7 @@ const Login = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Password</label>
+              <label className="text-sm font-medium text-foreground">{tSync('Password')}</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
@@ -134,13 +155,13 @@ const Login = () => {
                   type="checkbox"
                   className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
                 />
-                <span className="text-sm text-muted-foreground">Remember me</span>
+                <span className="text-sm text-muted-foreground">{tSync('Remember me')}</span>
               </label>
               <Link
                 to="/forgot-password"
                 className="text-sm text-primary hover:underline font-medium"
               >
-                Forgot password?
+                {tSync('Forgot password?')}
               </Link>
             </div>
 
@@ -158,7 +179,7 @@ const Login = () => {
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 />
               ) : (
-                "Sign In"
+                tSync('Sign In')
               )}
             </Button>
           </motion.form>
@@ -169,9 +190,9 @@ const Login = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            Don't have an account?{" "}
+            {tSync("Don't have an account?")}{" "}
             <Link to="/register" className="text-primary font-semibold hover:underline">
-              Create one
+              {tSync('Create one')}
             </Link>
           </motion.p>
         </div>
@@ -194,21 +215,21 @@ const Login = () => {
             <FloatingCard
               icon={Users}
               value="5,000+"
-              label="Verified Workers"
+              label={tSync('Verified Workers')}
               delay={0.4}
               className="ml-0"
             />
             <FloatingCard
               icon={Briefcase}
               value="10,000+"
-              label="Jobs Completed"
+              label={tSync('Jobs Completed Stats')}
               delay={0.6}
               className="ml-12"
             />
             <FloatingCard
               icon={CheckCircle}
               value="98%"
-              label="Trust Satisfaction"
+              label={tSync('Satisfaction Rate')}
               delay={0.8}
               className="ml-4"
             />

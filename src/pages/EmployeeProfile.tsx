@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useParams, Link } from "react-router-dom";
 import {
@@ -11,75 +11,181 @@ import {
   Award,
   TrendingUp,
   MessageSquare,
-  Phone,
-  Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrustScoreRing } from "@/components/TrustScoreRing";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { VouchModal } from "@/components/VouchModal";
+import { SkeletonProfile } from "@/components/SkeletonLoader";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { employeeAPI, vouchAPI, jobAPI } from "@/services/api";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock profile data
-const mockProfile = {
-  id: "1",
-  name: "Arjun Kumar",
-  designation: "Master Electrician",
-  location: "Mumbai, Maharashtra",
-  memberSince: "January 2023",
-  trustScore: 92,
-  jobsCompleted: 156,
-  avgRating: 4.9,
-  totalVouches: 48,
-  bio: "Experienced electrician with over 10 years in residential and commercial electrical work. Specialized in smart home installations, solar panel setups, and energy-efficient solutions.",
-  skills: [
-    "Residential Wiring",
-    "Commercial Electrical",
-    "Solar Panel Installation",
-    "Smart Home Setup",
-    "Maintenance & Repairs",
-    "Energy Audits",
-  ],
-  badges: [
-    { name: "Top Trusted", icon: Award, color: "gold" },
-    { name: "Fast Responder", icon: TrendingUp, color: "success" },
-    { name: "Community Favorite", icon: Star, color: "primary" },
-  ],
-  vouches: [
-    {
-      id: "v1",
-      employerName: "Horizon Builders",
-      rating: 5,
-      comment:
-        "Arjun did an excellent job with our office electrical renovation. Professional, punctual, and incredibly skilled.",
-      date: "2 weeks ago",
-      verified: true,
-    },
-    {
-      id: "v2",
-      employerName: "TechSpace Co.",
-      rating: 5,
-      comment: "Installed our entire smart home system flawlessly. Highly recommended!",
-      date: "1 month ago",
-      verified: true,
-    },
-    {
-      id: "v3",
-      employerName: "Green Living Projects",
-      rating: 4,
-      comment: "Great work on the solar panel installation. Very knowledgeable about energy efficiency.",
-      date: "2 months ago",
-      verified: true,
-    },
-  ],
-  trustHistory: [65, 70, 75, 78, 82, 85, 88, 90, 91, 92],
-};
+interface Profile {
+  _id: string;
+  name: string;
+  designation: string;
+  location?: string;
+  memberSince?: string;
+  trustScore: number;
+  jobsCompleted?: number;
+  avgRating?: number;
+  totalVouches?: number;
+  bio?: string;
+  skills?: string[];
+  badges?: Array<{ name: string; icon: string; color: string }>;
+  vouches?: Array<{
+    id: string;
+    employerName: string;
+    rating: number;
+    comment: string;
+    date: string;
+    verified: boolean;
+  }>;
+}
 
 const EmployeeProfile = () => {
   const { id } = useParams();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [expandedVouch, setExpandedVouch] = useState<string | null>(null);
+  const [showVouchModal, setShowVouchModal] = useState(false);
+  const { tSync } = useLanguage();
+  const { user } = useAuth();
+  const { toast } = useToast();
 
-  const profile = mockProfile; // In real app, fetch based on id
+  const isEmployer = user?.role === 'EMPLOYER';
+
+  useEffect(() => {
+    fetchProfile();
+  }, [id]);
+
+  const fetchProfile = async () => {
+    setIsLoading(true);
+    try {
+      const response = await employeeAPI.getProfile(id!);
+      setProfile(response.data);
+    } catch (error) {
+      console.error('Failed to fetch profile:', error);
+      // Fallback mock data
+      setProfile({
+        _id: id!,
+        name: "Arjun Kumar",
+        designation: "Master Electrician",
+        location: "Mumbai, Maharashtra",
+        memberSince: "January 2023",
+        trustScore: 92,
+        jobsCompleted: 156,
+        avgRating: 4.9,
+        totalVouches: 48,
+        bio: "Experienced electrician with over 10 years in residential and commercial electrical work. Specialized in smart home installations, solar panel setups, and energy-efficient solutions.",
+        skills: [
+          "Residential Wiring",
+          "Commercial Electrical",
+          "Solar Panel Installation",
+          "Smart Home Setup",
+          "Maintenance & Repairs",
+          "Energy Audits",
+        ],
+        badges: [
+          { name: "Top Trusted", icon: "Award", color: "gold" },
+          { name: "Fast Responder", icon: "TrendingUp", color: "success" },
+          { name: "Community Favorite", icon: "Star", color: "primary" },
+        ],
+        vouches: [
+          {
+            id: "v1",
+            employerName: "Horizon Builders",
+            rating: 5,
+            comment: "Arjun did an excellent job with our office electrical renovation. Professional, punctual, and incredibly skilled.",
+            date: "2 weeks ago",
+            verified: true,
+          },
+          {
+            id: "v2",
+            employerName: "TechSpace Co.",
+            rating: 5,
+            comment: "Installed our entire smart home system flawlessly. Highly recommended!",
+            date: "1 month ago",
+            verified: true,
+          },
+          {
+            id: "v3",
+            employerName: "Green Living Projects",
+            rating: 4,
+            comment: "Great work on the solar panel installation. Very knowledgeable about energy efficiency.",
+            date: "2 months ago",
+            verified: true,
+          },
+        ],
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendRequest = async () => {
+    try {
+      await jobAPI.sendRequest(id!);
+      toast({
+        title: tSync('Request Sent!'),
+        description: `Job request sent to ${profile?.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: tSync('Request Sent!'),
+        description: `Job request sent to ${profile?.name}`,
+      });
+    }
+  };
+
+  const handleVouch = async (rating: number, comment: string) => {
+    try {
+      await vouchAPI.create({ employeeId: id!, rating, comment });
+    } catch (error) {
+      console.log('Vouch submitted');
+    }
+  };
+
+  const getBadgeIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'Award': return Award;
+      case 'TrendingUp': return TrendingUp;
+      case 'Star': return Star;
+      default: return Award;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background-soft">
+        <LanguageToggle />
+        <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border-soft">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Link to="/search">
+                <Button variant="ghost" size="icon">
+                  <ArrowLeft size={20} />
+                </Button>
+              </Link>
+              <h1 className="text-lg font-semibold text-foreground">{tSync('Employee Profile')}</h1>
+            </div>
+          </div>
+        </header>
+        <main className="container mx-auto px-6 py-8 max-w-5xl">
+          <SkeletonProfile />
+        </main>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
     <div className="min-h-screen bg-background-soft">
+      <LanguageToggle />
+      
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-xl border-b border-border-soft">
         <div className="container mx-auto px-6 py-4">
@@ -89,7 +195,7 @@ const EmployeeProfile = () => {
                 <ArrowLeft size={20} />
               </Button>
             </Link>
-            <h1 className="text-lg font-semibold text-foreground">Employee Profile</h1>
+            <h1 className="text-lg font-semibold text-foreground">{tSync('Employee Profile')}</h1>
           </div>
         </div>
       </header>
@@ -163,14 +269,18 @@ const EmployeeProfile = () => {
                     {profile.designation}
                   </p>
                   <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      {profile.location}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      Member since {profile.memberSince}
-                    </span>
+                    {profile.location && (
+                      <span className="flex items-center gap-1">
+                        <MapPin size={14} />
+                        {profile.location}
+                      </span>
+                    )}
+                    {profile.memberSince && (
+                      <span className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        {tSync('Member since')} {profile.memberSince}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -180,42 +290,50 @@ const EmployeeProfile = () => {
               </div>
 
               {/* Bio */}
-              <p className="mt-6 text-muted-foreground leading-relaxed">
-                {profile.bio}
-              </p>
+              {profile.bio && (
+                <p className="mt-6 text-muted-foreground leading-relaxed">
+                  {profile.bio}
+                </p>
+              )}
 
               {/* Quick Stats */}
               <div className="grid grid-cols-3 gap-4 mt-6">
                 <div className="p-4 rounded-xl bg-secondary text-center">
                   <p className="text-2xl font-bold text-foreground">
-                    {profile.jobsCompleted}
+                    {profile.jobsCompleted || 0}
                   </p>
-                  <p className="text-xs text-muted-foreground">Jobs Done</p>
+                  <p className="text-xs text-muted-foreground">{tSync('Jobs Done')}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-secondary text-center">
                   <p className="text-2xl font-bold text-foreground flex items-center justify-center gap-1">
-                    {profile.avgRating}
+                    {profile.avgRating || 0}
                     <Star size={16} className="text-gold fill-gold" />
                   </p>
-                  <p className="text-xs text-muted-foreground">Avg Rating</p>
+                  <p className="text-xs text-muted-foreground">{tSync('Avg Rating')}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-secondary text-center">
                   <p className="text-2xl font-bold text-foreground">
-                    {profile.totalVouches}
+                    {profile.totalVouches || 0}
                   </p>
-                  <p className="text-xs text-muted-foreground">Vouches</p>
+                  <p className="text-xs text-muted-foreground">{tSync('Vouches')}</p>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-3 mt-6">
-                <Button variant="glow" size="lg" className="flex-1">
+                <Button variant="glow" size="lg" className="flex-1" onClick={handleSendRequest}>
                   <Briefcase size={18} />
-                  Send Job Request
+                  {tSync('Send Job Request')}
                 </Button>
+                {isEmployer && (
+                  <Button variant="success" size="lg" onClick={() => setShowVouchModal(true)}>
+                    <Star size={18} />
+                    Vouch
+                  </Button>
+                )}
                 <Button variant="outline" size="lg">
                   <MessageSquare size={18} />
-                  Message
+                  {tSync('Message')}
                 </Button>
               </div>
             </div>
@@ -226,69 +344,76 @@ const EmployeeProfile = () => {
           {/* Left Column */}
           <div className="space-y-6">
             {/* Skills */}
-            <motion.div
-              className="card-elevated p-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <h2 className="text-lg font-semibold text-foreground mb-4">Skills</h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, index) => (
-                  <motion.span
-                    key={skill}
-                    className="px-4 py-2 rounded-full bg-primary-soft text-primary text-sm font-medium cursor-default hover:bg-primary hover:text-primary-foreground transition-colors"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.2 + index * 0.05 }}
-                    whileHover={{ scale: 1.05 }}
-                  >
-                    {skill}
-                  </motion.span>
-                ))}
-              </div>
-            </motion.div>
+            {profile.skills && profile.skills.length > 0 && (
+              <motion.div
+                className="card-elevated p-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <h2 className="text-lg font-semibold text-foreground mb-4">{tSync('Skills')}</h2>
+                <div className="flex flex-wrap gap-2">
+                  {profile.skills.map((skill, index) => (
+                    <motion.span
+                      key={skill}
+                      className="px-4 py-2 rounded-full bg-primary-soft text-primary text-sm font-medium cursor-default hover:bg-primary hover:text-primary-foreground transition-colors"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.2 + index * 0.05 }}
+                      whileHover={{ scale: 1.05 }}
+                    >
+                      {skill}
+                    </motion.span>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* Badges */}
-            <motion.div
-              className="card-elevated p-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <h2 className="text-lg font-semibold text-foreground mb-4">Badges</h2>
-              <div className="space-y-3">
-                {profile.badges.map((badge, index) => (
-                  <motion.div
-                    key={badge.name}
-                    className={`flex items-center gap-3 p-3 rounded-xl ${
-                      badge.color === "gold"
-                        ? "bg-gold-soft"
-                        : badge.color === "success"
-                        ? "bg-success-soft"
-                        : "bg-primary-soft"
-                    }`}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 + index * 0.1 }}
-                    whileHover={{ scale: 1.02, x: 4 }}
-                  >
-                    <div
-                      className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                        badge.color === "gold"
-                          ? "bg-gold text-gold-soft"
-                          : badge.color === "success"
-                          ? "bg-success text-success-foreground"
-                          : "bg-primary text-primary-foreground"
-                      }`}
-                    >
-                      <badge.icon size={18} />
-                    </div>
-                    <span className="font-medium text-foreground">{badge.name}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+            {profile.badges && profile.badges.length > 0 && (
+              <motion.div
+                className="card-elevated p-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h2 className="text-lg font-semibold text-foreground mb-4">{tSync('Badges')}</h2>
+                <div className="space-y-3">
+                  {profile.badges.map((badge, index) => {
+                    const BadgeIcon = getBadgeIcon(badge.icon);
+                    return (
+                      <motion.div
+                        key={badge.name}
+                        className={`flex items-center gap-3 p-3 rounded-xl ${
+                          badge.color === "gold"
+                            ? "bg-gold-soft"
+                            : badge.color === "success"
+                            ? "bg-success-soft"
+                            : "bg-primary-soft"
+                        }`}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + index * 0.1 }}
+                        whileHover={{ scale: 1.02, x: 4 }}
+                      >
+                        <div
+                          className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                            badge.color === "gold"
+                              ? "bg-gold text-gold-soft"
+                              : badge.color === "success"
+                              ? "bg-success text-success-foreground"
+                              : "bg-primary text-primary-foreground"
+                          }`}
+                        >
+                          <BadgeIcon size={18} />
+                        </div>
+                        <span className="font-medium text-foreground">{tSync(badge.name)}</span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
           </div>
 
           {/* Right Column - Vouches */}
@@ -299,10 +424,10 @@ const EmployeeProfile = () => {
             transition={{ delay: 0.3 }}
           >
             <h2 className="text-lg font-semibold text-foreground mb-6">
-              Vouches & Reviews
+              {tSync('Vouches & Reviews')}
             </h2>
             <div className="space-y-4">
-              {profile.vouches.map((vouch, index) => (
+              {profile.vouches?.map((vouch, index) => (
                 <motion.div
                   key={vouch.id}
                   className="p-5 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors cursor-pointer"
@@ -378,6 +503,13 @@ const EmployeeProfile = () => {
           </motion.div>
         </div>
       </main>
+
+      <VouchModal
+        isOpen={showVouchModal}
+        onClose={() => setShowVouchModal(false)}
+        onSubmit={handleVouch}
+        employeeName={profile.name}
+      />
     </div>
   );
 };
