@@ -1,11 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, Briefcase, Info, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/Logo";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type Role = "EMPLOYEE" | "EMPLOYER";
 
@@ -20,23 +23,50 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tSync } = useLanguage();
+  const { register, user } = useAuth();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!role) return;
+    
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await register({
+        name,
+        email,
+        password,
+        role,
+        designation: role === 'EMPLOYEE' ? designation : undefined,
+      });
       toast({
-        title: "Account created!",
-        description: "Welcome to VouchSafe. Start building your trust score.",
+        title: tSync('Account created!'),
+        description: tSync('Welcome to VouchSafe'),
       });
       navigate("/dashboard");
-    }, 1500);
+    } catch (error: any) {
+      toast({
+        title: tSync('Registration failed'),
+        description: error.response?.data?.message || 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex">
+      <LanguageToggle />
+      
       {/* Left Side - Form */}
       <motion.div
         className="w-full lg:w-[55%] flex flex-col justify-center px-8 lg:px-16 xl:px-24 bg-background"
@@ -59,12 +89,12 @@ const Register = () => {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-4xl font-bold text-foreground mb-2">
-              {step === 1 ? "Create Your Account" : "Complete Your Profile"}
+              {step === 1 ? tSync('Create Your Account') : tSync('Complete Your Profile')}
             </h1>
             <p className="text-muted-foreground text-lg mb-8">
               {step === 1
-                ? "Join the trusted employment network."
-                : "Tell us a bit more about yourself."}
+                ? tSync('Join the trusted employment network.')
+                : tSync('Tell us a bit more about yourself.')}
             </p>
           </motion.div>
 
@@ -80,7 +110,7 @@ const Register = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Full Name</label>
+                    <label className="text-sm font-medium text-foreground">{tSync('Full Name')}</label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -95,7 +125,7 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Email</label>
+                    <label className="text-sm font-medium text-foreground">{tSync('Email')}</label>
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -110,7 +140,7 @@ const Register = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Password</label>
+                    <label className="text-sm font-medium text-foreground">{tSync('Password')}</label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                       <Input
@@ -139,7 +169,7 @@ const Register = () => {
                     onClick={() => setStep(2)}
                     disabled={!name || !email || !password}
                   >
-                    Continue
+                    {tSync('Continue')}
                   </Button>
                 </motion.div>
               ) : (
@@ -152,7 +182,7 @@ const Register = () => {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="space-y-3">
-                    <label className="text-sm font-medium text-foreground">I am a...</label>
+                    <label className="text-sm font-medium text-foreground">{tSync('I am a...')}</label>
                     <div className="grid grid-cols-2 gap-4">
                       <motion.button
                         type="button"
@@ -175,9 +205,9 @@ const Register = () => {
                           </motion.div>
                         )}
                         <User className="h-8 w-8 mb-3 text-primary" />
-                        <p className="font-semibold text-foreground">Employee</p>
+                        <p className="font-semibold text-foreground">{tSync('Employee')}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Looking for work
+                          {tSync('Looking for work')}
                         </p>
                       </motion.button>
 
@@ -202,9 +232,9 @@ const Register = () => {
                           </motion.div>
                         )}
                         <Briefcase className="h-8 w-8 mb-3 text-primary" />
-                        <p className="font-semibold text-foreground">Employer</p>
+                        <p className="font-semibold text-foreground">{tSync('Employer')}</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Hiring trusted workers
+                          {tSync('Hiring trusted workers')}
                         </p>
                       </motion.button>
                     </div>
@@ -221,7 +251,7 @@ const Register = () => {
                         transition={{ duration: 0.3 }}
                       >
                         <label className="text-sm font-medium text-foreground">
-                          Designation
+                          {tSync('Designation')}
                         </label>
                         <div className="relative">
                           <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -246,7 +276,7 @@ const Register = () => {
                   >
                     <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-primary">
-                      Your Trust Score grows through verified work and vouches from employers. Start building trust today!
+                      {tSync('Trust explanation')}
                     </p>
                   </motion.div>
 
@@ -257,7 +287,7 @@ const Register = () => {
                       size="xl"
                       onClick={() => setStep(1)}
                     >
-                      Back
+                      {tSync('Back')}
                     </Button>
                     <Button
                       type="submit"
@@ -273,7 +303,7 @@ const Register = () => {
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         />
                       ) : (
-                        "Create Account"
+                        tSync('Create Account')
                       )}
                     </Button>
                   </div>
@@ -288,9 +318,9 @@ const Register = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
           >
-            Already have an account?{" "}
+            {tSync('Already have an account?')}{" "}
             <Link to="/login" className="text-primary font-semibold hover:underline">
-              Sign in
+              {tSync('Sign in')}
             </Link>
           </motion.p>
         </div>
@@ -338,8 +368,8 @@ const Register = () => {
           </motion.div>
 
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            Build Trust,
-            <span className="block text-primary">Get Hired</span>
+            {tSync('Hire with Confidence').split(',')[0]},
+            <span className="block text-primary">{tSync('Work with Trust')}</span>
           </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
             Join thousands of verified workers and employers in the most trusted employment network.
@@ -348,9 +378,9 @@ const Register = () => {
           {/* Feature highlights */}
           <div className="mt-8 space-y-3 text-left max-w-xs mx-auto">
             {[
-              "Verified trust scores",
-              "Direct employer connections",
-              "Transparent vouch system",
+              tSync('Verified Trust Scores'),
+              tSync('Direct Connections'),
+              tSync('Transparent Vouching'),
             ].map((feature, idx) => (
               <motion.div
                 key={feature}
